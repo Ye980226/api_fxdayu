@@ -34,6 +34,7 @@ class OKCoinREST(APIClient):
 
     def sign(self, dictionary):
         data = self._chg_dic_to_sign(dictionary)
+        print(data)
         signature = self.__md5(data)
         return signature.upper()
 
@@ -159,17 +160,27 @@ class OKCoinSpotREST(OKCoinREST):
 
     def trade(self, symbol, type, price=None, amount=None):
         api_key = self.key
-        sig_dict = locals()
+        # if price!=None:
+        #     price=float(price)
+        # if amount!=None:
+        #     amount=float(amount)
+        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "type": type}
         url = self._post_url_func(self.__post_url_dic["trade"])
-        data = {"api_key": api_key, "symbol": symbol, "type": type}
+        print(url)
         if price != None:
             data["price"] = price
         if amount != None:
             data["amount"] = amount
+        r = requests.post(url, data=data, timeout=self.timeout)
+        return r.json()
+    def order_info(self,symbol,order_id):
+        api_key = self.key
+        sig_dict = locals()
+        url = self._post_url_func(self.__post_url_dic["order_info"])
+        data = {"api_key": api_key, "symbol": symbol, "order_id": order_id}
         data["sign"] = self.sign(sig_dict)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
-
     def orders_info(self, type, symbol, order_id):
         api_key = self.key
         sig_dict = locals()
@@ -179,6 +190,14 @@ class OKCoinSpotREST(OKCoinREST):
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
+    def cancel_order(self,symbol,order_id):
+        api_key = self.key
+        sig_dict = locals()
+        url = self._post_url_func(self.__post_url_dic["cancel_order"])
+        data = {"api_key": api_key, "symbol": symbol, "order_id":order_id}
+        data["sign"] = self.sign(sig_dict)
+        r = requests.post(url, data=data, timeout=self.timeout)
+        return r.json()
     def order_history(self, symbol, status, current_page, page_length):
         api_key = self.key
         sig_dict = locals()
