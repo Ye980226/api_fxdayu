@@ -34,7 +34,6 @@ class OKCoinREST(APIClient):
 
     def sign(self, dictionary):
         data = self._chg_dic_to_sign(dictionary)
-        print(data)
         signature = self.__md5(data)
         return signature.upper()
 
@@ -54,7 +53,8 @@ class OKCoinREST(APIClient):
 
     def _chg_dic_to_sign(self, dictionary):
         keys = list(dictionary.keys())
-        keys.remove("self")
+        if "self" in keys:
+            keys.remove("self")
         keys.sort()
         strings = []
         for key in keys:
@@ -147,24 +147,21 @@ class OKCoinSpotREST(OKCoinREST):
         url = self._get_url_func(self.__get_url_dic["trades"], params=params)
         print(url)
         r = requests.get(url, headers=self.headers, timeout=self.timeout)
-        data = r.json()
-        return data
+        data = pd.DataFrame(r.json())
+        data=data.set_index("date_ms")
+        return data.to_dict()
 
     def userinfo(self):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals())}
+        signed_data = {"api_key": self.key}
+        data = {"api_key": self.key, "sign": self.sign(signed_data)}
         url = self._post_url_func(self.__post_url_dic["userinfo"])
         print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
     def trade(self, symbol, type, price=None, amount=None):
-        api_key = self.key
-        # if price!=None:
-        #     price=float(price)
-        # if amount!=None:
-        #     amount=float(amount)
-        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "type": type}
+        signed_data = {"api_key": self.key, "symbol": symbol, "type": type, "price": price, "amount": amount}
+        data = {"api_key": self.key, "sign": self.sign(signed_data), "symbol": symbol, "type": type}
         url = self._post_url_func(self.__post_url_dic["trade"])
         print(url)
         if price != None:
@@ -173,53 +170,59 @@ class OKCoinSpotREST(OKCoinREST):
             data["amount"] = amount
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
-    def order_info(self,symbol,order_id):
-        api_key = self.key
-        sig_dict = locals()
+
+    def order_info(self, symbol, order_id):
+        signed_data = {"api_key": self.key, "symbol": symbol, "order_id": order_id}
         url = self._post_url_func(self.__post_url_dic["order_info"])
-        data = {"api_key": api_key, "symbol": symbol, "order_id": order_id}
-        data["sign"] = self.sign(sig_dict)
-        r = requests.post(url, data=data, timeout=self.timeout)
-        return r.json()
-    def orders_info(self, type, symbol, order_id):
-        api_key = self.key
-        sig_dict = locals()
-        url = self._post_url_func(self.__post_url_dic["orders_info"])
-        data = {"api_key": api_key, "symbol": symbol, "type": type, "order_id": order_id}
-        data["sign"] = self.sign(sig_dict)
+        print(url)
+        data = {"api_key": self.key, "symbol": symbol, "order_id": order_id}
+        data["sign"] = self.sign(signed_data)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
-    def cancel_order(self,symbol,order_id):
-        api_key = self.key
-        sig_dict = locals()
-        url = self._post_url_func(self.__post_url_dic["cancel_order"])
-        data = {"api_key": api_key, "symbol": symbol, "order_id":order_id}
-        data["sign"] = self.sign(sig_dict)
+    def orders_info(self, type, symbol, order_id):
+        signed_data = {"api_key": self.key, "symbol": symbol, "order_id": order_id, "type": type}
+        url = self._post_url_func(self.__post_url_dic["orders_info"])
+        print(url)
+        data = {"api_key": self.key, "symbol": symbol, "type": type, "order_id": order_id}
+        data["sign"] = self.sign(signed_data)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
+
+    def cancel_order(self, symbol, order_id):
+        signed_data = {"api_key": self.key, "symbol": symbol, "order_id": order_id}
+        url = self._post_url_func(self.__post_url_dic["cancel_order"])
+        print(url)
+        data = {"api_key": self.key, "symbol": symbol, "order_id": order_id}
+        data["sign"] = self.sign(signed_data)
+        r = requests.post(url, data=data, timeout=self.timeout)
+        return r.json()
+
     def order_history(self, symbol, status, current_page, page_length):
-        api_key = self.key
-        sig_dict = locals()
+        signed_data = {"api_key": self.key, "symbol": symbol, "status": status, "current_page": current_page,
+                       "page_length": page_length}
         url = self._post_url_func(self.__post_url_dic["order_history"])
-        data = {"api_key": api_key, "symbol": symbol, "status": status, "current_page": current_page,
+        print(url)
+        data = {"api_key": self.key, "symbol": symbol, "status": status, "current_page": current_page,
                 "page_length": page_length}
-        data["sign"] = self.sign(sig_dict)
+        data["sign"] = self.sign(signed_data)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
     def wallet_info(self):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals())}
+        signed_data = {"api_key": self.key}
+        data = {"api_key": self.key, "sign": self.sign(signed_data)}
         url = self._post_url_func(self.__post_url_dic["wallet_info"])
         print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
+        print(r.status_code)
         return r.json()
 
     def batch_trade(self, symbol, orders_data, type=None):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals())}
+        signed_data = {"api_key": self.key, "symbol": symbol, "type": type, "orders_data": orders_data}
+        data = {"api_key": self.key, "sign": self.sign(signed_data)}
         url = self._post_url_func(self.__post_url_dic["batch_trade"])
+        print(url)
         data["symbol"] = symbol
         data["orders_data"] = orders_data
         if type != None:
@@ -228,40 +231,47 @@ class OKCoinSpotREST(OKCoinREST):
         return r.json()
 
     def withdraw(self, symbol, chargefee, trade_pwd, withdraw_address, withdraw_amount, target):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals()), "chargefee": chargefee, "trade_pwd": trade_pwd,
+        signed_data = {"api_key": self.key, "chargefee": chargefee, "symbol": symbol, "trade_pwd": trade_pwd,
+                       "withdraw_address": withdraw_address, "withdraw_amount": withdraw_amount, "target": target}
+        data = {"api_key": self.key, "sign": self.sign(signed_data), "chargefee": chargefee, "trade_pwd": trade_pwd,
                 "withdraw_address": withdraw_address, "withdraw_amount": withdraw_amount, "target": target}
         url = self._post_url_func(self.__post_url_dic["withdraw"])
+        print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
     def cancel_withdraw(self, symbol, withdraw_id):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "withdraw_id": withdraw_id}
+        signed_data = {"api_key": self.key, "symbol": symbol, "withdraw_id": withdraw_id}
+        data = {"api_key": self.key, "sign": self.sign(signed_data), "symbol": symbol, "withdraw_id": withdraw_id}
         url = self._post_url_func(self.__post_url_dic["cancel_withdraw"])
+        print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
     def withdraw_info(self, symbol, withdraw_id):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "withdraw_id": withdraw_id}
+        signed_data = {"api_key": self.key, "symbol": symbol, "withdraw_id": withdraw_id}
+        data = {"api_key": self.key, "sign": self.sign(signed_data), "symbol": symbol, "withdraw_id": withdraw_id}
         url = self._post_url_func(self.__post_url_dic["withdraw_info"])
+        print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
     def account_records(self, symbol, type, current_page, page_length):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "type": type,
+        signed_data = {"api_key": self.key, "symbol": symbol, "type": type, "current_page": current_page,
+                       "page_length": page_length}
+        data = {"api_key": self.key, "sign": self.sign(signed_data), "symbol": symbol, "type": type,
                 "current_page": current_page, "page_length": page_length}
         url = self._post_url_func(self.__post_url_dic["account_records"])
+        print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
-    def funds_transfe(self, symbol, amount, from_account, to_account):
-        api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol,
+    def funds_transfer(self, symbol, amount, from_account, to_account):
+        signed_data = {"api_key": self.key, "symbol": symbol, "amount": amount, "from": from_account, "to": to_account}
+        data = {"api_key": self.key, "sign": self.sign(signed_data), "symbol": symbol,
                 "amount": amount, "from": from_account, "to": to_account}
         url = self._post_url_func(self.__post_url_dic["funds_transfer"])
+        print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
