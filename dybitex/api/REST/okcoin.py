@@ -233,7 +233,7 @@ class OKCoinSpotREST(OKCoinREST):
     def withdraw(self, symbol, chargefee, trade_pwd, withdraw_address, withdraw_amount, target):
         signed_data = {"api_key": self.key, "chargefee": chargefee, "symbol": symbol, "trade_pwd": trade_pwd,
                        "withdraw_address": withdraw_address, "withdraw_amount": withdraw_amount, "target": target}
-        data = {"api_key": self.key, "sign": self.sign(signed_data), "chargefee": chargefee, "trade_pwd": trade_pwd,
+        data = {"api_key": self.key,"symbol":symbol, "sign": self.sign(signed_data), "chargefee": chargefee, "trade_pwd": trade_pwd,
                 "withdraw_address": withdraw_address, "withdraw_amount": withdraw_amount, "target": target}
         url = self._post_url_func(self.__post_url_dic["withdraw"])
         print(url)
@@ -284,7 +284,7 @@ class OKCoinFuturesREST(OKCoinREST):
                               "future_index": "future_index", "future_estimated_price": "future_estimated_price",
                               "future_kline": "future_kline", "future_hold_amount": "future_hold_amount",
                               "future_price_limit": "future_price_limit"}
-        self.__post_url_dic = {"future_userinfo": "future_userinfo", "future_position": "future_position",
+        self.__post_url_dic = {"future_userinfo": "future_userinfo_4fix", "future_position": "future_position_4fix",
                                "future_trade": "future_trade", "future_trades_history": "future_trades_history",
                                "future_batch_trade": "future_batch_trade", "future_cancel": "future_cancel",
                                "future_order_info": "future_order_info", "future_orders_info": "future_orders_info",
@@ -330,13 +330,13 @@ class OKCoinFuturesREST(OKCoinREST):
         r = requests.get(url, headers=self.headers)
         return r.json()
 
-    def future_kline(self, type, contract_type, size=None, since=None):
+    def future_kline(self,symbol, type, contract_type, size=None, since=None):
         params = self._chg_dic_to_str(locals())
         url = self._get_url_func(self.__get_url_dic["future_kline"], params=params)
         print(url)
         r = requests.get(url, headers=self.headers, timeout=self.timeout)
         text = eval(r.text)
-        df = pd.DataFrame(text, columns=["trade_date", "open", "high", "low", "close", "volume"])
+        df = pd.DataFrame(text, columns=["trade_date", "open", "high", "low", "close", "volume","%s_volume"%(symbol[:3])])
         df["trade_date"] = df["trade_date"].map(
             lambda x: datetime.datetime.fromtimestamp(x / 1000).strftime("%Y-%m-%d %H:%M:%S"))
         df = df.set_index("trade_date")
@@ -349,7 +349,7 @@ class OKCoinFuturesREST(OKCoinREST):
         r = requests.get(url, headers=self.headers)
         return r.json()
 
-    def future_price_limit(self, symbol, contract):
+    def future_price_limit(self, symbol, contract_type):
         params = self._chg_dic_to_str(locals())
         url = self._get_url_func(self.__get_url_dic["future_price_limit"], params=params)
         print(url)
@@ -372,14 +372,15 @@ class OKCoinFuturesREST(OKCoinREST):
         r = requests.post(url, data=data, timeout=self.timeout)
         return r.json()
 
-    def future_trade(self, symbol, contract_type, price, amount, position_type, match_price=None, lever_rate=None):
+    def future_trade(self, symbol, contract_type, price, amount, type, match_price=None, lever_rate=None):
         api_key = self.key
         data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "contract_type": contract_type,
-                "price": price, "amount": amount, "type": position_type}
+                "price": price, "amount": amount, "type":type}
         if match_price != None:
             data["match_price"] = match_price
         if lever_rate != None:
             data["lever_rate"] = lever_rate
+        print(data)
         url = self._post_url_func(self.__post_url_dic["future_trade"])
         print(url)
         r = requests.post(url, data=data, timeout=self.timeout)
@@ -406,7 +407,7 @@ class OKCoinFuturesREST(OKCoinREST):
 
     def future_cancel(self, symbol, order_id, contract_type):
         api_key = self.key
-        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "contract_type": contract_type}
+        data = {"api_key": self.key, "sign": self.sign(locals()), "symbol": symbol, "contract_type": contract_type,"order_id":order_id}
         url = self._post_url_func(self.__post_url_dic["future_cancel"])
         print(url)
         r = requests.post(url, data=data, timeout=self.timeout)

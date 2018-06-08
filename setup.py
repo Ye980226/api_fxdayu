@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages 
 setup( 
 	name = 'dybitex', 
-	version = '0.0.1', 
+	version = '0.0.2', 
 	keywords='dybitex', 
 	description = 'a library for api_fxdayu', 
 	license = 'MIT License', 
