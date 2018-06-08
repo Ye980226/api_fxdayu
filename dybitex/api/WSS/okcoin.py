@@ -17,7 +17,7 @@ from queue import Queue, Empty
 from threading import Thread
 from time import sleep
 
-from vnpy.api.okex import OkexSpotApi, OKEX_SPOT_HOST
+from .api_vnpy.vnokex import OkexSpotApi, OKEX_SPOT_HOST
 from .api_vnpy.vtGateway import *
 from .api_vnpy.vtFunction import getJsonPath
 
