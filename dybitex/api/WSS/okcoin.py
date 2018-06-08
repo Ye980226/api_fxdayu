@@ -18,7 +18,7 @@ from threading import Thread
 from time import sleep
 
 from .api_vnpy.vnokex import OkexSpotApi, OKEX_SPOT_HOST
-from vtObject import *
+from .vtObject import *
 EXCHANGE_OKEX = 'OKEX'		 # OKEX比特币交易所
 STATUS_REJECTED = '拒单'
 DIRECTION_LONG = '多'
