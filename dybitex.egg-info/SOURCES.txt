@@ -16,6 +16,7 @@ dybitex/api/WSS/__init__.py
 dybitex/api/WSS/base.py
 dybitex/api/WSS/okcoin.py
 dybitex/api/WSS/test(1).py
+dybitex/api/WSS/vtObject.py
 dybitex/api/WSS/api_vnpy/__init__.py
 dybitex/api/WSS/api_vnpy/vnokex.py
 dybitex/api/WSS/api_vnpy/vtFunction.py

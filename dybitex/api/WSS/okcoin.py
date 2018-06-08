@@ -18,36 +18,43 @@ from threading import Thread
 from time import sleep
 
 from .api_vnpy.vnokex import OkexSpotApi, OKEX_SPOT_HOST
-from .api_vnpy.vtGateway import *
 from .api_vnpy.vtFunction import getJsonPath
-
-# 价格类型映射
-# 买卖类型： 限价单（buy/sell） 市价单（buy_market/sell_market）
+from vtObject import *
+EXCHANGE_OKEX = 'OKEX'		 # OKEX比特币交易所
+STATUS_REJECTED = '拒单'
+DIRECTION_LONG = '多'
+DIRECTION_SHORT = '空'
+PRICETYPE_LIMITPRICE = '限价'
+PRICETYPE_MARKETPRICE = '市价'
+PRODUCT_SPOT = '现货'
 priceTypeMap = {}
 priceTypeMap['buy'] = (DIRECTION_LONG, PRICETYPE_LIMITPRICE)
 priceTypeMap['buy_market'] = (DIRECTION_LONG, PRICETYPE_MARKETPRICE)
 priceTypeMap['sell'] = (DIRECTION_SHORT, PRICETYPE_LIMITPRICE)
 priceTypeMap['sell_market'] = (DIRECTION_SHORT, PRICETYPE_MARKETPRICE)
 priceTypeMapReverse = {v: k for k, v in priceTypeMap.items()}
+# 状态常量
+STATUS_NOTTRADED = '未成交'
+STATUS_PARTTRADED = '部分成交'
+STATUS_ALLTRADED = '全部成交'
+STATUS_CANCELLED = '已撤销'
+STATUS_REJECTED = '拒单'
+STATUS_UNKNOWN = '未知'
 
-# 委托状态印射
 statusMap = {}
 statusMap[-1] = STATUS_CANCELLED
 statusMap[0] = STATUS_NOTTRADED
 statusMap[1] = STATUS_PARTTRADED
 statusMap[2] = STATUS_ALLTRADED
 statusMap[4] = STATUS_UNKNOWN
-
-
 ########################################################################
-class OkexGateway(VtGateway):
+class OkexGateway:
     """OKEX交易接口"""
 
     # ----------------------------------------------------------------------
-    def __init__(self, eventEngine, gatewayName='OKEX'):
+    def __init__(self,  gatewayName='OKEX'):
         """Constructor"""
-        super(OkexGateway, self).__init__(eventEngine, gatewayName)
-
+        self.gatewayName = gatewayName
         self.spotApi = SpotApi(self)
         # self.api_contract = Api_contract(self)
 
@@ -62,28 +69,16 @@ class OkexGateway(VtGateway):
     def connect(self):
         """连接"""
         # 载入json文件
-        try:
-            f = file(self.filePath)
-        except IOError:
-            log = VtLogData()
-            log.gatewayName = self.gatewayName
-            log.logContent = u'读取连接配置出错，请检查'
-            self.onLog(log)
-            return
+        # try:
+        f = open(self.filePath)
 
         # 解析json文件
         setting = json.load(f)
-        try:
-            apiKey = str(setting['apiKey'])
-            secretKey = str(setting['secretKey'])
-            trace = setting['trace']
-            symbols = setting['symbols']
-        except KeyError:
-            log = VtLogData()
-            log.gatewayName = self.gatewayName
-            log.logContent = u'连接配置缺少字段，请检查'
-            self.onLog(log)
-            return
+        apiKey = str(setting['apiKey'])
+        secretKey = str(setting['secretKey'])
+        trace = setting['trace']
+        symbols = setting['symbols']
+
 
             # 初始化接口
         self.spotApi.init(apiKey, secretKey, trace, symbols)
@@ -118,47 +113,6 @@ class OkexGateway(VtGateway):
         """关闭"""
         self.spotApi.close()
 
-    # ----------------------------------------------------------------------
-    def initQuery(self):
-        """初始化连续查询"""
-        if self.qryEnabled:
-            # 需要循环的查询函数列表
-            self.qryFunctionList = [self.qryPosition]
-
-            self.qryCount = 0  # 查询触发倒计时
-            self.qryTrigger = 2  # 查询触发点
-            self.qryNextFunction = 0  # 上次运行的查询函数索引
-
-            self.startQuery()
-
-            # ----------------------------------------------------------------------
-
-    def query(self, event):
-        """注册到事件处理引擎上的查询函数"""
-        self.qryCount += 1
-
-        if self.qryCount > self.qryTrigger:
-            # 清空倒计时
-            self.qryCount = 0
-
-            # 执行查询函数
-            function = self.qryFunctionList[self.qryNextFunction]
-            function()
-
-            # 计算下次查询函数的索引，如果超过了列表长度，则重新设为0
-            self.qryNextFunction += 1
-            if self.qryNextFunction == len(self.qryFunctionList):
-                self.qryNextFunction = 0
-
-    # ----------------------------------------------------------------------
-    def startQuery(self):
-        """启动连续查询"""
-        self.eventEngine.register(EVENT_TIMER, self.query)
-
-    # ----------------------------------------------------------------------
-    def setQryEnabled(self, qryEnabled):
-        """设置是否要启动循环查询"""
-        self.qryEnabled = qryEnabled
 
 
 ########################################################################
@@ -205,12 +159,12 @@ class SpotApi(OkexSpotApi):
             callback(data)
 
     # ----------------------------------------------------------------------
-    def onError(self, data):
-        """错误推送"""
-        error = VtErrorData()
-        error.gatewayName = self.gatewayName
-        error.errorMsg = str(data)
-        self.gateway.onError(error)
+    # def onError(self, data):
+    #     """错误推送"""
+    #     error = VtErrorData()
+    #     error.gatewayName = self.gatewayName
+    #     error.errorMsg = str(data)
+    #     self.gateway.onError(error)
 
     # ----------------------------------------------------------------------
     def onClose(self):
