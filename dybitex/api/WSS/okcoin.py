@@ -210,7 +210,7 @@ class SpotApi(OkexSpotApi):
             contract.size = 0.00001
             contract.priceTick = 0.00001
             contract.productClass = PRODUCT_SPOT
-            self.gateway.onContract(contract)
+            # self.gateway.onContract(contract)
 
     # ----------------------------------------------------------------------
     def initCallback(self):
@@ -270,7 +270,7 @@ class SpotApi(OkexSpotApi):
 
         if tick.bidPrice1:
             newtick = copy(tick)
-            self.gateway.onTick(newtick)
+            # self.gateway.onTick(newtick)
 
     # ----------------------------------------------------------------------
     def onDepth(self, data):
@@ -329,7 +329,7 @@ class SpotApi(OkexSpotApi):
 
         if tick.lastPrice:
             newtick = copy(tick)
-            self.gateway.onTick(newtick)
+            # self.gateway.onTick(newtick)
 
     # ----------------------------------------------------------------------
     def onSpotOrder(self, data):
@@ -343,7 +343,7 @@ class SpotApi(OkexSpotApi):
 
             order = self.localOrderDict[localNo]
             order.status = STATUS_REJECTED
-            self.gateway.onOrder(order)
+            # self.gateway.onOrder(order)
 
     # ----------------------------------------------------------------------
     def onSpotCancelOrder(self, data):
@@ -378,7 +378,7 @@ class SpotApi(OkexSpotApi):
                 pos.frozen = frozen
                 pos.position = frozen + available
 
-                self.gateway.onPosition(pos)
+                # self.gateway.onPosition(pos)
 
         self.writeLog(u'持仓信息查询成功')
 
@@ -426,7 +426,7 @@ class SpotApi(OkexSpotApi):
             order.tradedVolume = d['deal_amount']
             order.status = statusMap[d['status']]
 
-            self.gateway.onOrder(copy(order))
+            # self.gateway.onOrder(copy(order))
 
     # ----------------------------------------------------------------------
     def onSubSpotOrder(self, data):
@@ -467,7 +467,7 @@ class SpotApi(OkexSpotApi):
 
         order.status = statusMap[rawData['status']]
         order.tradedVolume = float(rawData['completedTradeAmount'])
-        self.gateway.onOrder(copy(order))
+        # self.gateway.onOrder(copy(order))
 
         # 成交信息
         if order.tradedVolume > lastTradedVolume:
@@ -490,7 +490,7 @@ class SpotApi(OkexSpotApi):
             trade.volume = order.tradedVolume - lastTradedVolume
 
             trade.tradeTime = datetime.now().strftime('%H:%M:%S')
-            self.gateway.onTrade(trade)
+            # self.gateway.onTrade(trade)
 
         # 撤单
         if localNo in self.cancelDict:
@@ -517,7 +517,7 @@ class SpotApi(OkexSpotApi):
             pos.frozen = float(freezed[symbol])
             pos.position = pos.frozen + float(free[symbol])
 
-            self.gateway.onPosition(pos)
+            # self.gateway.onPosition(pos)
 
     # ----------------------------------------------------------------------
     def init(self, apiKey, secretKey, trace, symbols):
@@ -585,7 +585,7 @@ class SpotApi(OkexSpotApi):
         log = VtLogData()
         log.gatewayName = self.gatewayName
         log.logContent = content
-        self.gateway.onLog(log)
+        # self.gateway.onLog(log)
 
     # ----------------------------------------------------------------------
     def checkDataError(self, data):
@@ -598,7 +598,7 @@ class SpotApi(OkexSpotApi):
             error.gatewayName = self.gatewayName
             error.errorID = rawData['error_code']
             error.errorMsg = u'请求失败，功能：%s' % data['channel']
-            self.gateway.onError(error)
+            # self.gateway.onError(error)
             return True
 
     # ----------------------------------------------------------------------
